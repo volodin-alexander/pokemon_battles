@@ -12,6 +12,10 @@ elecric = ['Thunder Shock', 'Thunder', 'Thunderbolt', 'High Voltage', '220 Power
 fire = ['Fire Blast', 'Flamethower', 'Fire Spin', 'Lava Soup', 'Earthflame', 'Fire Fly', 'Hyper Warm']
 basic = ['Scratch', 'Bite', 'Poison Sting', 'Poison Jab', 'Quick Attack', 'Take Down', 'Outrage']
 
+super_power = ['Thunder', 'High Voltage', 'Hydro Pump', 'Fire Blast', 'Lava Soup', 'Super Bud', 'Outrage', 'Poison Jab', 'Leaf Hug', '220 Power', 'Sea Power', 'Fire Fly']
+normal_power = ['Thunderbolt', 'Surf', 'Bubble Beam', 'Acid', 'Flamethower', 'Fire Spin', 'Vine Whip', 'Thunder Punch', 'Hyper Warm', 'Scald', 'Take Down', 'Bite']
+small_power = ['Thunder Shock', 'Scratch', 'Water Gun']
+
 class Pokemon():  #Class of pokemons
     def __init__(self, name: str, type: str, lives: int | float, defence: int):
         self.name = name
@@ -67,7 +71,7 @@ class Pokemon():  #Class of pokemons
         if opp.type == 'W' and self.type == 'E':    #Types bonuses and effects
             if opp.lives - ((dam - opp.defence) * 2)  >= 0:
                 opp.lives - ((dam - opp.defence) * 2) #Opponent type water, electric poer is effective -> x2 damage
-        elif opp.type == 'F' and self.type == 'G':
+        elif opp.type == 'G' and self.type == 'F':
             if opp.lives - ((dam - opp.defence) * 2) >= 0:
                 opp.lives - ((dam - opp.defence) * 2)
         elif opp.type == 'G' and self.type == 'E':
@@ -76,6 +80,53 @@ class Pokemon():  #Class of pokemons
         else:
             if opp.lives - (dam - opp.defence) >= 0:    
                 opp.lives - (dam - opp.defence)
+
+    
+player = Pokemon('Pokemon', '-', 0, 5)
+opponent = Pokemon('Pokemon 2', '-', 0, 5)
+def choose_pokemon():
+    global player
+    choose = easygui.choicebox('Choose a Pokemon', 'Pokemon Battles', pokemons)
+    if choose == 'Bulbasaur' or choose == 'Vileplume':
+        type_p = 'G'
+    elif choose == 'Squirtle':
+        type_p = 'W'
+    elif choose == 'Charmonder':
+        type_p = 'F'
+    else:
+        type_p = 'B'
+    player = Pokemon(choose, type_p, 100, random.randint(1, 15))
+
+def battle():
+    global player, opponent, free
+    choose_pokemon()
+    easygui.msgbox(f'Your Pokemon will be {player.name}.')
+    opp = random.choice(pokemons)
+    if opp == 'Bulbasaur' or opp == 'Vileplume':
+        type_p = 'G'
+    elif opp == 'Squirtle':
+        type_p = 'W'
+    elif opp == 'Charmonder':
+        type_p = 'F'
+    else:
+        type_p = 'B'
+    opponent = Pokemon(opp, type_p, 100, random.randint(1, 15))
+    easygui.msgbox(f"Your opponent's pokemon will be {opponent.name}.")
+    free = False
+
+free = True
+sw = 'my'
+
+while 1:
+    print(player.lives)
+    if free == True:
+        battle()
+    
+    if sw == 'my':
+        attks = easygui.buttonbox('Choose attack', 'Pokemon Battles', player.attacks)
+        if attks in super_power:
+            opponent.decrease_lives(random.randint(30, 55), player.type)
+            print(opponent.lives)
 
 
 root.mainloop()
