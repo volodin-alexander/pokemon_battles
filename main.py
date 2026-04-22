@@ -65,25 +65,26 @@ class Pokemon():  #Class of pokemons
             self.lives += (100 - self.lives) # example, if you don't know it: lives=80, heal=30 -> 80+30=110, 110 > 100; 80 + (100 - 80 = 20) = 100
 
     def hit(self, opp, dam: int):
+        global opponent, player
         #Note: 'opp' must be an object of Pokemon() class 
         if self.defence >= dam:    #If pokemon's def. absorbs all damage
             dam = self.defence + 2
         if opp.type == 'W' and self.type == 'E':    #Types bonuses and effects
             if opp.lives - ((dam - opp.defence) * 2)  >= 0:
-                opp.lives - ((dam - opp.defence) * 2) #Opponent type water, electric poer is effective -> x2 damage
+                opp.lives -= ((dam - opp.defence) * 2) #Opponent type water, electric power is effective -> x2 damage
         elif opp.type == 'G' and self.type == 'F':
             if opp.lives - ((dam - opp.defence) * 2) >= 0:
-                opp.lives - ((dam - opp.defence) * 2)
+                opp.lives -= ((dam - opp.defence) * 2)
         elif opp.type == 'G' and self.type == 'E':
             if opp.lives - ((dam - opp.defence) // 2) >= 0:
-                opp.lives - ((dam - opp.defence) // 2)
+                opp.lives -= ((dam - opp.defence) // 2)
         else:
             if opp.lives - (dam - opp.defence) >= 0:    
-                opp.lives - (dam - opp.defence)
+                opp.lives -= (dam - opp.defence)
 
     
-player = Pokemon('Pokemon', '-', 0, 5)
-opponent = Pokemon('Pokemon 2', '-', 0, 5)
+player = Pokemon('Pokemon 1', 'B', 100, 5)
+opponent = Pokemon('Pokemon 2', 'B', 100, 5)
 def choose_pokemon():
     global player
     choose = easygui.choicebox('Choose a Pokemon', 'Pokemon Battles', pokemons)
@@ -116,17 +117,59 @@ def battle():
 
 free = True
 sw = 'my'
+information = f"{player.name}:{player.lives}hp | {opponent.name}:{opponent.lives}hp"
+info = tk.Label(root, text=information)
+info.pack()
 
-while 1:
-    print(player.lives)
+def update():
+    global free, sw, player, opponent, small_power, super_power, normal_power, basic, elecric, fire, grass, water, info, information
     if free == True:
         battle()
     
     if sw == 'my':
         attks = easygui.buttonbox('Choose attack', 'Pokemon Battles', player.attacks)
+        print(attks)
         if attks in super_power:
-            opponent.decrease_lives(random.randint(30, 55), player.type)
+            player.hit(opponent, random.randint(30, 55))
+            print(opponent.lives)
+        else:
+            player.hit(opponent, random.randint(10, 25))
             print(opponent.lives)
 
+        easygui.msgbox(F'Your {player.name} used {attks}!')
 
+        sw = 'opp'
+    elif sw == 'opp':
+        attks = random.choice(opponent.attacks)
+        print(attks)
+        if attks in super_power:
+            opponent.hit(player, random.randint(30, 55))
+            print(player.lives)
+        elif attks == 'Growth':
+            opponent.defence += random.randint(1, 8)
+        else:
+            opponent.hit(player, random.randint(10, 25))
+            print(player.lives)
+
+
+
+
+        easygui.msgbox(F"Your opponent's {opponent.name} used {attks}!")
+        sw = 'my'
+
+        
+    information = f"{player.name}:{player.lives}hp | {opponent.name}:{opponent.lives}hp"
+    info.config(text=information)
+
+    if player.lives <= 0 or opponent.lives <= 0:
+        if player.lives <= 0:
+            easygui.msgbox(f"You can't battle! {opponent.name} is winner!")
+            quit()
+        else:
+            easygui.msgbox(f"You win this battle! {player.name} is winner!")
+            quit()
+
+    root.after(100, update)
+
+root.after(100, update)
 root.mainloop()
