@@ -109,52 +109,117 @@ def battle():
         type_p = 'W'
     elif opp == 'Charmonder':
         type_p = 'F'
+    elif opp == 'Pikachu':
+        type_p = 'E'
     else:
         type_p = 'B'
     opponent = Pokemon(opp, type_p, 100, random.randint(1, 15))
     easygui.msgbox(f"Your opponent's pokemon will be {opponent.name}.")
     free = False
 
+
+def color_set(type: str):
+    global color
+    if type == 'G':
+        color = 'green'
+    elif type == 'W':
+        color = 'cyan'
+    elif type == 'F':
+        color = "#43A52B"
+    elif type == 'E':
+        color = "#A6FF00"
+    else:
+        color = "#798885"
+
+def choose_attack(text: str):
+    global attk
+    attk = text
 free = True
 sw = 'my'
 information = f"{player.name}:{player.lives}hp | {opponent.name}:{opponent.lives}hp"
 info = tk.Label(root, text=information)
 info.pack()
+color = 'grey'
+attk = ''
+attkk = ''
+
+btn_widgets = []
+for i in range(4):
+    btn = tk.Button(root, width=20)
+    btn.pack(pady=5, padx=10, fill="x")
+    btn_widgets.append(btn)
+
+def on_click(attack_name):
+    # player switch
+    global sw, attk
+    attk = attack_name
+
+def update_button_ui():
+    # updating the buttons look
+    color_set(player.type)
+    for i in range(4):
+        attack_name = player.attacks[i]
+        btn_widgets[i].config(
+            text=attack_name,
+            bg=color,
+            fg="white",
+
+            command=lambda name=attack_name: on_click(name)
+        )
 
 def update():
-    global free, sw, player, opponent, small_power, super_power, normal_power, basic, elecric, fire, grass, water, info, information
+    global free, sw, player, opponent, small_power, super_power, normal_power, basic, elecric, fire, grass, water, info, information, color, attk, attkk
     if free == True:
         battle()
+        update_button_ui()
     
     if sw == 'my':
-        attks = easygui.buttonbox('Choose attack', 'Pokemon Battles', player.attacks)
-        print(attks)
-        if attks in super_power:
+        color_set(player.type)
+        buttons = [
+            (f"{player.attacks[0]}", color, "white"),
+            (f"{player.attacks[1]}", color, "white"),
+            (f"{player.attacks[2]}", color, "white"),
+            (f"{player.attacks[3]}", color, "white")
+        ]
+
+        for i in range(4):
+            attack_text = player.attacks[i]
+            btn_widgets[i].config(
+                text=attack_text,
+                bg=color,
+                # Используем lambda, чтобы атака срабатывала только при нажатии
+                command=lambda t=attack_text: choose_attack(t)
+            )
+            
+            btn.pack(pady=5, padx=10, fill="x")
+
+
+        if attk in super_power:
             player.hit(opponent, random.randint(30, 55))
             print(opponent.lives)
         else:
             player.hit(opponent, random.randint(10, 25))
             print(opponent.lives)
 
-        easygui.msgbox(F'Your {player.name} used {attks}!')
+        easygui.msgbox(F'Your {player.name} used {attk}!')
 
         sw = 'opp'
     elif sw == 'opp':
-        attks = random.choice(opponent.attacks)
-        print(attks)
-        if attks in super_power:
+        attkk = random.choice(opponent.attacks)
+        if attkk in super_power:
             opponent.hit(player, random.randint(30, 55))
             print(player.lives)
-        elif attks == 'Growth':
+        elif attkk == 'Growth':
             opponent.defence += random.randint(1, 8)
+        elif attkk == 'Mega Drain':
+            player.decrease_lives(25, 'G')
+            opponent.heal_lives(25)
         else:
             opponent.hit(player, random.randint(10, 25))
             print(player.lives)
 
 
-
-
-        easygui.msgbox(F"Your opponent's {opponent.name} used {attks}!")
+        easygui.msgbox(F"Your opponent's {opponent.name} used {attk}!")
         sw = 'my'
 
         
