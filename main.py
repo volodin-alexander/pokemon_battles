@@ -10,11 +10,13 @@ grass = ['Mega Drain', 'Leaf Hug', 'Growth', 'Vine Whip', 'Super Bud', 'Poison P
 water = ['Water Gun', 'Surf', 'Bubble Beam', 'Hydro Pump', 'Scald', 'Sea Power', 'Wave', 'Hydro']
 elecric = ['Thunder Shock', 'Thunder', 'Thunderbolt', 'High Voltage', '220 Power', 'Thunder Punch']
 fire = ['Fire Blast', 'Flamethower', 'Fire Spin', 'Lava Soup', 'Earthflame', 'Fire Fly', 'Hyper Warm']
-basic = ['Scratch', 'Bite', 'Poison Sting', 'Poison Jab', 'Quick Attack', 'Take Down', 'Outrage']
+basic = ['Scratch', 'Bite', 'Poison Sting', 'Poison Jab', 'Quick Attack', 'Take Down', 'Outrage', 'Smart']
 
-super_power = ['Thunder', 'High Voltage', 'Hydro Pump', 'Fire Blast', 'Lava Soup', 'Super Bud', 'Outrage', 'Poison Jab', 'Leaf Hug', '220 Power', 'Sea Power', 'Fire Fly']
+super_power = ['Thunder', 'High Voltage', 'Hydro Pump', 'Fire Blast', 'Lava Soup', 'Outrage', 'Poison Jab', 'Leaf Hug', '220 Power', 'Fire Fly']
 normal_power = ['Thunderbolt', 'Surf', 'Bubble Beam', 'Acid', 'Flamethower', 'Fire Spin', 'Vine Whip', 'Thunder Punch', 'Hyper Warm', 'Scald', 'Take Down', 'Bite']
 small_power = ['Thunder Shock', 'Scratch', 'Water Gun']
+
+special = ['Super Bud', 'Mega Drain', 'Growth', 'Sea Power', 'Smart']
 
 class Pokemon():  #Class of pokemons
     def __init__(self, name: str, type: str, lives: int | float, defence: int):
@@ -131,17 +133,14 @@ def color_set(type: str):
     else:
         color = "#798885"
 
-def choose_attack(text: str):
-    global attk
-    attk = text
 free = True
 sw = 'my'
 information = f"{player.name}:{player.lives}hp | {opponent.name}:{opponent.lives}hp"
 info = tk.Label(root, text=information)
 info.pack()
 color = 'grey'
-attk = ''
-attkk = ''
+player_attack = ''
+max_attacks = 4
 
 btn_widgets = []
 for i in range(4):
@@ -149,79 +148,92 @@ for i in range(4):
     btn.pack(pady=5, padx=10, fill="x")
     btn_widgets.append(btn)
 
-def on_click(attack_name):
-    # player switch
-    global sw, attk
-    attk = attack_name
+def attack(name):
+    global player_attack
+    player_attack = name
 
 def update_button_ui():
+    global max_attacks
     # updating the buttons look
     color_set(player.type)
-    for i in range(4):
+    for i in range(max_attacks):
         attack_name = player.attacks[i]
         btn_widgets[i].config(
             text=attack_name,
             bg=color,
             fg="white",
-
-            command=lambda name=attack_name: on_click(name)
+            command=lambda: attack(attack_name)
         )
 
+def player_turn():
+    if player_attack in super_power:
+        player.hit(opponent, random.randint(31, 55))
+    elif player_attack in normal_power:
+        player.hit(opponent, random.randint(20, 30))
+    elif player_attack in small_power:
+        player.hit(opponent, random.randint(10, 19))
+    elif player_attack in special:
+        if player_attack == 'Mega Drain':
+            drain = random.randint(25, 40)
+            player.hit(opponent, drain)
+            player.heal_lives(drain)
+        elif player_attack == 'Growth':
+            player.defence += random.randint(1, 8)
+        elif player_attack == 'Super Bud':
+            player.defence += random.randint(1, 12)
+            if (random.randint(1, 100)) < 20:
+                player.heal_lives(20)
+        elif player_attack == 'Sea Power':
+            player.defence += random.randint(1, 12)
+            if (random.randint(1, 100)) < 20:
+                player.heal_lives(20)
+        elif player_attack == 'Smart':
+            player.attacks = []
+            player.attacks = random.sample(basic, 4)
+            player.heal_lives(5)
+            player.defence += 2
+
+    opponent_turn()
+        
+
+def opponent_turn():
+    opp_attack = random.choice(opponent.attacks)
+    if opp_attack in super_power:
+        opponent.hit(player, random.randint(31, 55))
+    elif opp_attack in normal_power:
+        opponent.hit(player, random.randint(20, 30))
+    elif opp_attack in small_power:
+        opponent.hit(player, random.randint(10, 19))
+    elif opp_attack in special:
+        if opp_attack == 'Mega Drain':
+            drain = random.randint(25, 40)
+            opponent.hit(player, drain)
+            opponent.heal_lives(drain)
+        elif opp_attack == 'Growth':
+            opponent.defence += random.randint(1, 8)
+        elif opp_attack == 'Super Bud':
+            opponent.defence += random.randint(1, 12)
+            if (random.randint(1, 100)) < 20:
+                opponent.heal_lives(20)
+        elif opp_attack == 'Sea Power':
+            opponent.defence += random.randint(1, 12)
+            if (random.randint(1, 100)) < 20:
+                opponent.heal_lives(20)
+        elif opp_attack == 'Smart':
+            opponent.attacks = []
+            opponent.attacks = random.sample(basic, 4)
+            opponent.heal_lives(5)
+            opponent.defence += 2
+    player_turn()
+
+
 def update():
-    global free, sw, player, opponent, small_power, super_power, normal_power, basic, elecric, fire, grass, water, info, information, color, attk, attkk
+    global free, sw, player, opponent, small_power, super_power, normal_power, basic, elecric, fire, grass, water, info, information, color
     if free == True:
         battle()
         update_button_ui()
     
-    if sw == 'my':
-        color_set(player.type)
-        buttons = [
-            (f"{player.attacks[0]}", color, "white"),
-            (f"{player.attacks[1]}", color, "white"),
-            (f"{player.attacks[2]}", color, "white"),
-            (f"{player.attacks[3]}", color, "white")
-        ]
-
-        for i in range(4):
-            attack_text = player.attacks[i]
-            btn_widgets[i].config(
-                text=attack_text,
-                bg=color,
-                # Используем lambda, чтобы атака срабатывала только при нажатии
-                command=lambda t=attack_text: choose_attack(t)
-            )
-            
-            btn.pack(pady=5, padx=10, fill="x")
-
-
-        if attk in super_power:
-            player.hit(opponent, random.randint(30, 55))
-            print(opponent.lives)
-        else:
-            player.hit(opponent, random.randint(10, 25))
-            print(opponent.lives)
-
-        easygui.msgbox(F'Your {player.name} used {attk}!')
-
-        sw = 'opp'
-    elif sw == 'opp':
-        attkk = random.choice(opponent.attacks)
-        if attkk in super_power:
-            opponent.hit(player, random.randint(30, 55))
-            print(player.lives)
-        elif attkk == 'Growth':
-            opponent.defence += random.randint(1, 8)
-        elif attkk == 'Mega Drain':
-            player.decrease_lives(25, 'G')
-            opponent.heal_lives(25)
-        else:
-            opponent.hit(player, random.randint(10, 25))
-            print(player.lives)
-
-
-        easygui.msgbox(F"Your opponent's {opponent.name} used {attk}!")
-        sw = 'my'
-
+    player_turn()
         
     information = f"{player.name}:{player.lives}hp | {opponent.name}:{opponent.lives}hp"
     info.config(text=information)
