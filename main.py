@@ -49,16 +49,16 @@ class Pokemon():  #Class of pokemons
             dam = self.defence + 2
         if opp_type == 'E' and self.type == 'W':    #Types bonuses and effects
             if self.lives - ((dam - self.defence) * 2)  >= 0:
-                self.lives - ((dam - self.defence) * 2)
+                self.lives -= ((dam - self.defence) * 2)
         elif opp_type == 'F' and self.type == 'G':
             if self.lives - ((dam - self.defence) * 2) >= 0:
-                self.lives - ((dam - self.defence) * 2)
+                self.lives -= ((dam - self.defence) * 2)
         elif opp_type == 'E' and self.type == 'G':
             if self.lives - ((dam - self.defence) // 2) >= 0:
-                self.lives - ((dam - self.defence) // 2)
+                self.lives -= ((dam - self.defence) // 2)
         else:
             if self.lives - (dam - self.defence) >= 0:    #All diffrent types - normal damage
-                self.lives - (dam - self.defence)
+                self.lives -= (dam - self.defence)
         
     def heal_lives(self, heal: int):   #Heal function / for attack 'Mega Drain'
         if (self.lives + heal) <= 100:
@@ -141,6 +141,7 @@ info.pack()
 color = 'grey'
 player_attack = ''
 max_attacks = 4
+can_switch = True
 
 btn_widgets = []
 for i in range(4):
@@ -148,9 +149,28 @@ for i in range(4):
     btn.pack(pady=5, padx=10, fill="x")
     btn_widgets.append(btn)
 
+def locked():
+    global btn_widgets
+    for i in btn_widgets:
+        i.config(
+            state = 'disabled',
+        )
+
+def unlocked():
+    global btn_widgets
+    for i in btn_widgets:
+        i.config(
+            state = 'active',
+        )
+    
+
 def attack(name):
     global player_attack
     player_attack = name
+    update_button_ui()
+    locked()
+
+    root.after(1000, perform_opponent_move)
 
 def update_button_ui():
     global max_attacks
@@ -161,11 +181,13 @@ def update_button_ui():
         btn_widgets[i].config(
             text=attack_name,
             bg=color,
-            fg="white",
+            fg="black",
             command=lambda: attack(attack_name)
         )
 
 def player_turn():
+    global can_switch
+    can_switch = False
     if player_attack in super_power:
         player.hit(opponent, random.randint(31, 55))
     elif player_attack in normal_power:
@@ -192,40 +214,51 @@ def player_turn():
             player.attacks = random.sample(basic, 4)
             player.heal_lives(5)
             player.defence += 2
+    can_switch = True
+    
 
-    opponent_turn()
+
         
 
 def opponent_turn():
-    opp_attack = random.choice(opponent.attacks)
-    if opp_attack in super_power:
-        opponent.hit(player, random.randint(31, 55))
-    elif opp_attack in normal_power:
-        opponent.hit(player, random.randint(20, 30))
-    elif opp_attack in small_power:
-        opponent.hit(player, random.randint(10, 19))
-    elif opp_attack in special:
-        if opp_attack == 'Mega Drain':
-            drain = random.randint(25, 40)
-            opponent.hit(player, drain)
-            opponent.heal_lives(drain)
-        elif opp_attack == 'Growth':
-            opponent.defence += random.randint(1, 8)
-        elif opp_attack == 'Super Bud':
-            opponent.defence += random.randint(1, 12)
-            if (random.randint(1, 100)) < 20:
-                opponent.heal_lives(20)
-        elif opp_attack == 'Sea Power':
-            opponent.defence += random.randint(1, 12)
-            if (random.randint(1, 100)) < 20:
-                opponent.heal_lives(20)
-        elif opp_attack == 'Smart':
-            opponent.attacks = []
-            opponent.attacks = random.sample(basic, 4)
-            opponent.heal_lives(5)
-            opponent.defence += 2
-    player_turn()
+    global can_switch
+    locked()
+    if can_switch:
+        opp_attack = random.choice(opponent.attacks)
+        if opp_attack in super_power:
+            opponent.hit(player, random.randint(31, 55))
+        elif opp_attack in normal_power:
+            opponent.hit(player, random.randint(20, 30))
+        elif opp_attack in small_power:
+            opponent.hit(player, random.randint(10, 19))
+        elif opp_attack in special:
+            if opp_attack == 'Mega Drain':
+                drain = random.randint(25, 40)
+                opponent.hit(player, drain)
+                opponent.heal_lives(drain)
+            elif opp_attack == 'Growth':
+                opponent.defence += random.randint(1, 8)
+            elif opp_attack == 'Super Bud':
+                opponent.defence += random.randint(1, 12)
+                if (random.randint(1, 100)) < 20:
+                    opponent.heal_lives(20)
+            elif opp_attack == 'Sea Power':
+                opponent.defence += random.randint(1, 12)
+                if (random.randint(1, 100)) < 20:
+                    opponent.heal_lives(20)
+            elif opp_attack == 'Smart':
+                opponent.attacks = []
+                opponent.attacks = random.sample(basic, 4)
+                opponent.heal_lives(5)
+                opponent.defence += 2
 
+        easygui.msgbox(f"Your opponent's {opponent.name} used {opp_attack}!")
+        can_switch = False
+
+def perform_opponent_move():
+    opponent_turn()
+    update_button_ui() # Обновляем HP после удара компьютера
+    unlocked()       # Возвращаем кнопки игроку
 
 def update():
     global free, sw, player, opponent, small_power, super_power, normal_power, basic, elecric, fire, grass, water, info, information, color
@@ -234,6 +267,7 @@ def update():
         update_button_ui()
     
     player_turn()
+    opponent_turn()
         
     information = f"{player.name}:{player.lives}hp | {opponent.name}:{opponent.lives}hp"
     info.config(text=information)
@@ -246,7 +280,7 @@ def update():
             easygui.msgbox(f"You win this battle! {player.name} is winner!")
             quit()
 
-    root.after(100, update)
+    root.after(1000, update)
 
-root.after(100, update)
+root.after(1000, update)
 root.mainloop()
