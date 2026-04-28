@@ -10,13 +10,13 @@ grass = ['Mega Drain', 'Leaf Hug', 'Growth', 'Vine Whip', 'Super Bud', 'Poison P
 water = ['Water Gun', 'Surf', 'Bubble Beam', 'Hydro Pump', 'Scald', 'Sea Power', 'Wave', 'Hydro']
 elecric = ['Thunder Shock', 'Thunder', 'Thunderbolt', 'High Voltage', '220 Power', 'Thunder Punch']
 fire = ['Fire Blast', 'Flamethower', 'Fire Spin', 'Lava Soup', 'Earthflame', 'Fire Fly', 'Hyper Warm']
-basic = ['Scratch', 'Bite', 'Poison Sting', 'Poison Jab', 'Quick Attack', 'Take Down', 'Outrage', 'Smart']
+basic = ['Scratch', 'Bite', 'Poison Sting', 'Poison Jab', 'Quick Attack', 'Take Down', 'Outrage', 'Smart', 'Self-Destroy']
 
 super_power = ['Thunder', 'High Voltage', 'Hydro Pump', 'Fire Blast', 'Lava Soup', 'Outrage', 'Poison Jab', 'Leaf Hug', '220 Power', 'Fire Fly']
 normal_power = ['Thunderbolt', 'Surf', 'Bubble Beam', 'Acid', 'Flamethower', 'Fire Spin', 'Vine Whip', 'Thunder Punch', 'Hyper Warm', 'Scald', 'Take Down', 'Bite']
 small_power = ['Thunder Shock', 'Scratch', 'Water Gun']
 
-special = ['Super Bud', 'Mega Drain', 'Growth', 'Sea Power', 'Smart']
+special = ['Super Bud', 'Mega Drain', 'Growth', 'Sea Power', 'Smart', 'Self-Destroy', 'Wave']
 
 class Pokemon():  #Class of pokemons
     def __init__(self, name: str, type: str, lives: int | float, defence: int):
@@ -59,6 +59,8 @@ class Pokemon():  #Class of pokemons
         else:
             if self.lives - (dam - self.defence) >= 0:    #All diffrent types - normal damage
                 self.lives -= (dam - self.defence)
+            else:
+                self.lives = 100
         
     def heal_lives(self, heal: int):   #Heal function / for attack 'Mega Drain'
         if (self.lives + heal) <= 100:
@@ -83,6 +85,8 @@ class Pokemon():  #Class of pokemons
         else:
             if opp.lives - (dam - opp.defence) >= 0:    
                 opp.lives -= (dam - opp.defence)
+            else:
+                opp.lives = 0
 
     
 player = Pokemon('Pokemon 1', 'B', 100, 5)
@@ -143,7 +147,11 @@ info.pack()
 color = 'grey'
 player_attack = ''
 max_attacks = 4
-can_switch = True
+my_acc = 95
+opp_acc = 95
+
+news = tk.Label(root, text='----------No special events----------')
+news.pack()
 
 btn_widgets = []
 for i in range(4):
@@ -191,68 +199,86 @@ def update_button_ui():
 
 def player_turn():
     global player_attack
-    if player_attack in super_power:
-        player.hit(opponent, random.randint(31, 55))
-    elif player_attack in normal_power:
-        player.hit(opponent, random.randint(20, 30))
-    elif player_attack in small_power:
-        player.hit(opponent, random.randint(10, 19))
-    elif player_attack in special:
-        if player_attack == 'Mega Drain':
-            drain = random.randint(25, 40)
-            player.hit(opponent, drain)
-            player.heal_lives(drain)
-        elif player_attack == 'Growth':
-            player.defence += random.randint(1, 8)
-        elif player_attack == 'Super Bud':
-            player.defence += random.randint(1, 12)
-            if (random.randint(1, 100)) < 20:
-                player.heal_lives(20)
-        elif player_attack == 'Sea Power':
-            player.defence += random.randint(1, 12)
-            if (random.randint(1, 100)) < 20:
-                player.heal_lives(20)
-        elif player_attack == 'Smart':
-            player.attacks = []
-            player.attacks = random.sample(basic, 4)
-            player.heal_lives(5)
-            player.defence += 2
-    easygui.msgbox(f"Your {player.name} used {player_attack}!")
+    if random.randint(0, 100) <= my_acc:
+        if player_attack in super_power:
+            player.hit(opponent, random.randint(31, 55))
+        elif player_attack in normal_power:
+            player.hit(opponent, random.randint(20, 30))
+        elif player_attack in small_power:
+            player.hit(opponent, random.randint(10, 19))
+        elif player_attack in special:
+            if player_attack == 'Mega Drain':
+                drain = random.randint(25, 40)
+                player.hit(opponent, drain)
+                player.heal_lives(drain)
+            elif player_attack == 'Growth':
+                player.defence += random.randint(1, 8)
+            elif player_attack == 'Super Bud':
+                player.defence += random.randint(1, 12)
+                news.config(text=f"Your {player}'s defence rose!")
+                if (random.randint(1, 100)) < 20:
+                    player.heal_lives(20)
+            elif player_attack == 'Sea Power':
+                player.defence += random.randint(1, 12)
+                if (random.randint(1, 100)) < 20:
+                    player.heal_lives(20)
+            elif player_attack == 'Smart':
+                player.attacks = []
+                player.attacks = random.sample(basic, 4)
+                player.heal_lives(5)
+                player.defence += 2
+                news.config(text=f"Your {player}'s defence rose!")
+            elif player_attack == 'Self-Destroy':
+                player.lives = 1
+                opponent.lives = 1
+            elif player_attack == 'Wave':
+                opp_acc -= random.randint(1, 9)
+                news.config(text=f"Your opponents's accuracy fell!")
+        easygui.msgbox(f"Your {player.name} used {player_attack}!")
+    else:
+        easygui.msgbox(f"Your {player.name} used {player_attack} and {opponent.name} avoided the attack.")
     player_attack = ''
     locked()
     
     
 def opponent_turn():
+    global player, opponent
     locked()
-    opp_attack = random.choice(opponent.attacks)
-    if opp_attack in super_power:
-        opponent.hit(player, random.randint(31, 55))
-    elif opp_attack in normal_power:
-        opponent.hit(player, random.randint(20, 30))
-    elif opp_attack in small_power:
-        opponent.hit(player, random.randint(10, 19))
-    elif opp_attack in special:
-        if opp_attack == 'Mega Drain':
-            drain = random.randint(25, 40)
-            opponent.hit(player, drain)
-            opponent.heal_lives(drain)
-        elif opp_attack == 'Growth':
-            opponent.defence += random.randint(1, 8)
-        elif opp_attack == 'Super Bud':
-            opponent.defence += random.randint(1, 12)
-            if (random.randint(1, 100)) < 20:
-                opponent.heal_lives(20)
-        elif opp_attack == 'Sea Power':
-            opponent.defence += random.randint(1, 12)
-            if (random.randint(1, 100)) < 20:
-                opponent.heal_lives(20)
-        elif opp_attack == 'Smart':
-            opponent.attacks = []
-            opponent.attacks = random.sample(basic, 4)
-            opponent.heal_lives(5)
-            opponent.defence += 2
+    if random.randint(0, 100) <= opp_acc:
+        opp_attack = random.choice(opponent.attacks)
+        if opp_attack in super_power:
+            opponent.hit(player, random.randint(31, 55))
+        elif opp_attack in normal_power:
+            opponent.hit(player, random.randint(20, 30))
+        elif opp_attack in small_power:
+            opponent.hit(player, random.randint(10, 19))
+        elif opp_attack in special:
+            if opp_attack == 'Mega Drain':
+                drain = random.randint(25, 40)
+                opponent.hit(player, drain)
+                opponent.heal_lives(drain)
+            elif opp_attack == 'Growth':
+                opponent.defence += random.randint(1, 8)
+            elif opp_attack == 'Super Bud':
+                opponent.defence += random.randint(1, 12)
+                if (random.randint(1, 100)) < 20:
+                    opponent.heal_lives(20)
+            elif opp_attack == 'Sea Power':
+                opponent.defence += random.randint(1, 12)
+                if (random.randint(1, 100)) < 20:
+                    opponent.heal_lives(20)
+            elif opp_attack == 'Smart':
+                opponent.attacks = []
+                opponent.attacks = random.sample(basic, 4)
+                opponent.heal_lives(5)
+                opponent.defence += 2
+            elif opp_attack == 'Self-Destroy':
+                opponent.lives = 1
+                player.lives = 1
 
-    easygui.msgbox(f"Your opponent's {opponent.name} used {opp_attack}!")
+        easygui.msgbox(f"Your opponent's {opponent.name} used {opp_attack}!")
+    else:
+        easygui.msgbox(f"Your opponent's {opponent.name} used {opp_attack} and {player.name} avoided the attack.")
     unlocked()
 
 
@@ -271,7 +297,7 @@ def battle_loop():
     info.config(text=information)
     update_button_ui()
 
-#pygame.mixer.music.play(-1)
+pygame.mixer.music.play(-1)
 def update():
     global free, sw, player, opponent, small_power, super_power, normal_power, basic, elecric, fire, grass, water, info, information, color
 
