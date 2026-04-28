@@ -54,13 +54,13 @@ class Pokemon():  #Class of pokemons
             if self.lives - ((dam - self.defence) * 2) >= 0:
                 self.lives -= ((dam - self.defence) * 2)
         elif opp_type == 'E' and self.type == 'G':
-            if self.lives - ((dam - self.defence) // 2) >= 0:
-                self.lives -= ((dam - self.defence) // 2)
+            if self.lives - ((dam - self.defence) // 3) >= 0:
+                self.lives -= ((dam - self.defence) // 3)
         else:
             if self.lives - (dam - self.defence) >= 0:    #All diffrent types - normal damage
                 self.lives -= (dam - self.defence)
             else:
-                self.lives = 100
+                self.lives = 0
         
     def heal_lives(self, heal: int):   #Heal function / for attack 'Mega Drain'
         if (self.lives + heal) <= 100:
@@ -80,8 +80,8 @@ class Pokemon():  #Class of pokemons
             if opp.lives - ((dam - opp.defence) * 2) >= 0:
                 opp.lives -= ((dam - opp.defence) * 2)
         elif opp.type == 'G' and self.type == 'E':
-            if opp.lives - ((dam - opp.defence) // 2) >= 0:
-                opp.lives -= ((dam - opp.defence) // 2)
+            if opp.lives - ((dam - opp.defence) // 3) >= 0:
+                opp.lives -= ((dam - opp.defence) // 3)
         else:
             if opp.lives - (dam - opp.defence) >= 0:    
                 opp.lives -= (dam - opp.defence)
@@ -149,8 +149,9 @@ player_attack = ''
 max_attacks = 4
 my_acc = 95
 opp_acc = 95
+news_text = '----------No special events----------'
 
-news = tk.Label(root, text='----------No special events----------')
+news = tk.Label(root, text=news_text)
 news.pack()
 
 btn_widgets = []
@@ -198,7 +199,7 @@ def update_button_ui():
         )
 
 def player_turn():
-    global player_attack
+    global player_attack, opp_acc, news_text, my_acc
     if random.randint(0, 100) <= my_acc:
         if player_attack in super_power:
             player.hit(opponent, random.randint(31, 55))
@@ -215,7 +216,8 @@ def player_turn():
                 player.defence += random.randint(1, 8)
             elif player_attack == 'Super Bud':
                 player.defence += random.randint(1, 12)
-                news.config(text=f"Your {player}'s defence rose!")
+                my_acc -= random.randint(2, 8)
+                news_text = f"Your {player}'s defence rose, but accuracy fell!"
                 if (random.randint(1, 100)) < 20:
                     player.heal_lives(20)
             elif player_attack == 'Sea Power':
@@ -227,24 +229,28 @@ def player_turn():
                 player.attacks = random.sample(basic, 4)
                 player.heal_lives(5)
                 player.defence += 2
-                news.config(text=f"Your {player}'s defence rose!")
+                news_text = f"Your {player.name}'s attack rose!"
+                
             elif player_attack == 'Self-Destroy':
                 player.lives = 1
                 opponent.lives = 1
             elif player_attack == 'Wave':
                 opp_acc -= random.randint(1, 9)
-                news.config(text=f"Your opponents's accuracy fell!")
+                news_text = "Your opponents's accuracy fell!"
+                
         easygui.msgbox(f"Your {player.name} used {player_attack}!")
     else:
         easygui.msgbox(f"Your {player.name} used {player_attack} and {opponent.name} avoided the attack.")
     player_attack = ''
+    news.config(text=news_text)
     locked()
     
     
 def opponent_turn():
-    global player, opponent
+    global player, opponent, my_acc, opp_acc, news_text
     locked()
     if random.randint(0, 100) <= opp_acc:
+        global opp_attack
         opp_attack = random.choice(opponent.attacks)
         if opp_attack in super_power:
             opponent.hit(player, random.randint(31, 55))
@@ -259,8 +265,13 @@ def opponent_turn():
                 opponent.heal_lives(drain)
             elif opp_attack == 'Growth':
                 opponent.defence += random.randint(1, 8)
+                news_text = f"Your opponent's {player.name}'s defence rose!"
+                
             elif opp_attack == 'Super Bud':
-                opponent.defence += random.randint(1, 12)
+                opponent.defence += random.randint(4, 12)
+                opp_acc -= random.randint(2, 8)
+                news_text = f"Your opponent's {player.name}'s defence rose sharply, but accuracy fell!"
+                
                 if (random.randint(1, 100)) < 20:
                     opponent.heal_lives(20)
             elif opp_attack == 'Sea Power':
@@ -275,10 +286,16 @@ def opponent_turn():
             elif opp_attack == 'Self-Destroy':
                 opponent.lives = 1
                 player.lives = 1
+            elif player_attack == 'Wave':
+                opp_acc -= random.randint(1, 9)
+                news_text = f"Your {player.name}'s accuracy fell!"
+                
 
         easygui.msgbox(f"Your opponent's {opponent.name} used {opp_attack}!")
     else:
         easygui.msgbox(f"Your opponent's {opponent.name} used {opp_attack} and {player.name} avoided the attack.")
+    
+    news.config(text=news_text)
     unlocked()
 
 
@@ -299,10 +316,11 @@ def battle_loop():
 
 pygame.mixer.music.play(-1)
 def update():
-    global free, sw, player, opponent, small_power, super_power, normal_power, basic, elecric, fire, grass, water, info, information, color
+    global free, sw, player, opponent, small_power, super_power, normal_power, basic, elecric, fire, grass, water, info, information, color, news, news_text
 
     information = f"{player.name}:{player.lives}hp | {opponent.name}:{opponent.lives}hp"
     info.config(text=information)
+    news.config(background='green', text=news_text)
 
     if player.lives <= 0 or opponent.lives <= 0:
         if player.lives <= 0:
@@ -315,7 +333,8 @@ def update():
         root.destroy()
         return
 
-    root.after(100, update)
+    root.after(500, update)
+    
 
 
 update_button_ui()
